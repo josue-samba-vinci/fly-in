@@ -1,10 +1,9 @@
-from typing import Any
 from config import Hub, Connection, Map
 
 
 def read() -> dict[str, str]:
-    """reads the content of an input file and returns a dict cotaining"""
-    """every necessary key to build the map with its value"""
+    """reads the content of an input file and returns a dict containing
+      every necessary key to build the map with its value"""
     content: str
     lines: list[str]
     config_dict: dict[str, str] = {}
@@ -12,7 +11,7 @@ def read() -> dict[str, str]:
         content = f.read()
     lines = content.splitlines()
     for line in lines:
-        if line.startswith("#") or line.strip == "":
+        if line.startswith("#") or line.strip() == "":
             continue
         parts = line.split(": ")
         if len(parts) > 2 or len(parts) < 2:
@@ -38,7 +37,7 @@ def parse_metadata(metadata: str) -> dict[str, str]:
 
 
 def parse_hub(line: str) -> Hub:
-    """receives the value of a hub and transforms    it into an Hub object"""
+    """receives the values of a hub and transforms it into a Hub object"""
     head, sep, rest = line.partition("[")
     values = head.split()
     if len(values) != 3:
@@ -47,18 +46,44 @@ def parse_hub(line: str) -> Hub:
     return Hub(name=values[0],
                pos_x=values[1],
                pos_y=values[2],
-               zone=metadata.get("zone"),
-               zone=metadata.get("color"),
-               zone=metadata.get("max_drones")
+               zone=metadata.get("zone", "normal"),
+               color=metadata.get("color"),
+               max_drones=metadata.get("max_drones", 1)
                )
 
 
-# def parse_connection(line: str) -> Connection:
+def parse_connection(line: str, hubs: list[Hub]) -> Connection:
+    """receives the value of a connection and transforms it into a Connection
+      object"""
+    head, sep, rest = line.partition("[")
+    values = head.split("-")
+    if len(values) != 2:
+        raise ValueError("A connection requires two hubs")
+    for hub in values:
+        if hub not in hubs:
+            raise ValueError(f"{hub} is not an existing hub")
+    metadata = parse_metadata(sep + rest) if sep else {}
+    return Connection(first_hub=values[0],
+                      second_hub=values[1],
+                      max_link_capacity=metadata.get("max_link_capacity"))
+
+# def get_map()
 
 
 if __name__ == "__main__":
     config_dict: dict[str, str]
     config_dict = read()
-    hub1 = parse_hub(config_dict["start_hub"])
-    print(hub1)
-    # set_values(config_dict)
+    start = parse_hub(config_dict["start_hub"])
+    print("start : ", end="")
+    print(f"{start.color}, ", end="")
+    print(f"{start.name}, ", end="")
+    print(f"{start.pos_x}, ", end="")
+    print(f"{start.pos_y}, ", end="")
+    print(start.zone)
+    end = parse_hub(config_dict["end_hub"])
+    print("end : ", end="")
+    print(f"{end.color}, ", end="")
+    print(f"{end.name}, ", end="")
+    print(f"{end.pos_x}, ", end="")
+    print(f"{end.pos_y}, ", end="")
+    print(end.zone)
