@@ -16,30 +16,39 @@ class Hub():
                  name: str,
                  pos_x: int,
                  pos_y: int,
-                 color: str | None = None) -> None:
+                 zone: ZoneType = ZoneType.NORMAL,
+                 color: str | None = None,
+                 max_drones: int = 1,
+                 ) -> None:
 
         self.name = name
         self.pos_x = pos_x
         self.pos_y = pos_y
+        self.zone = zone
         self.color = color
+        self.max_drones = max_drones
 
 
 class Connection():
     def __init__(self,
                  first_hub: str,
-                 second_hub: str) -> None:
+                 second_hub: str,
+                 max_link_capacity: int = 1) -> None:
 
         self.first_hub = first_hub
         self.second_hub = second_hub
+        self.max_link_capacity = max_link_capacity
 
 
 class Map():
     def __init__(self,
-                 start: Hub,
-                 end: Hub,
-                 hubs: list[Hub],
-                 connections: list[Connection]) -> None:
+                 nb_drones: int | None = None,
+                 start: Hub | None = None,
+                 end: Hub | None = None,
+                 hubs: list[Hub] | None = None,
+                 connections: list[Connection] | None = None) -> None:
 
+        self.nb_drones = nb_drones
         self.start = start
         self.end = end
         self.hubs = hubs
