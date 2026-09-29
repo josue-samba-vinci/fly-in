@@ -66,7 +66,7 @@ def get_map() -> Map:
                             + "end_hub in your configuration file")
                     hub = parse_hub(body, START_END_KEYS)
                     coordinate: list[int, int] = [hub.pos_x, hub.pos_y]
-                    print(f"COORDINATES {coordinates}")
+                    # print(f"COORDINATES {coordinates}")
                     if coordinate in coordinates:
                         raise ValueError(
                             "Two zones can't have the same coordinates")
@@ -82,39 +82,14 @@ def get_map() -> Map:
                     if parts[0] in hub_names:
                         raise ValueError("hub name already exists")
                     hub = parse_hub(body, HUB_KEYS)
-                    coordinate: list[int, int] = [hub.pos_x, hub.pos_y]
+                    # coordinate: list[int, int] = [hub.pos_x, hub.pos_y]
                     # print(f"COORDINATES {coordinates}")
                     if coordinate in coordinates:
-                        print(coordinates.index(coordinate))
+                        # print(coordinates.index(coordinate))
                         raise ValueError(
                             "Two zones can't have the same coordinates")
                     hubs.append(hub)
                     coordinates.append(coordinate)
-                case "connection":
-                    continue
-                case _:
-                    raise ValueError(f"Invalid field : {field}")
-        except ValueError as e:
-            print(f"line {line_number} : {e}")
-            return None
-
-    for line_number, line in enumerate(lines, start=1):
-        if line.startswith("#") or line.strip() == "":
-            continue
-        field, sep, body = line.partition(":")
-        if not sep or not body or not field:
-            raise ValueError(f"line {line_number}: Invalid line(field,"
-                                     + " separator or data missing)")
-        try:
-            match field:
-                case "nb_drones":
-                    continue
-                case "start_hub":
-                    continue
-                case "end_hub":
-                    continue
-                case "hub":
-                    continue
                 case "connection":
                     connection = parse_connection(body, hubs)
                     connections.append(connection)
