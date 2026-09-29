@@ -1,52 +1,129 @@
 from config import Hub, Connection, Map, ZoneType
-import sys
+
+
+START_END_KEYS = {"color"}
+HUB_KEYS = {"zone", "color", "max_drones"}
 
 
 def get_map() -> Map:
     """parse a map file into a Map object"""
     line_number: int = 0
-    content: str
+    content: str = ""
     nb_drones: int = 0
     start: Hub = None
     end: Hub = None
     hubs: list[Hub] = []
     connections: list[Connection] = []
+    coordinates: list[int, int] = []
+    count_start: int = 0
+    count_end: int = 0
     with open("input.txt", "r") as f:
         content = f.read()
     lines = content.splitlines()
-    for line in lines:
+
+    for line_number, line in enumerate(lines, start=1):
         if line.startswith("#") or line.strip() == "":
             continue
         field, sep, body = line.partition(":")
+        if (not sep or not body or not field) and line_number == 1:
+            raise ValueError(f"line {line_number}: it is mandatory to have the"
+                             + " number of drones on the first line\n"
+                             + "This is the format expected :\n"
+                             + "nb_drones: <positive int>")
         if not sep or not body or not field:
-            raise ValueError("Invalid line")
+            raise ValueError(f"line {line_number}: Invalid line(field,"
+                             + " separator or data missing)")
         try:
             match field:
                 case "nb_drones":
+                    if int(body) <= 0:
+                        raise ValueError(
+                            "nb_drones needs to be greater than 0")
                     nb_drones = int(body)
-                    line_number += 1
                 case "start_hub":
-                    hub = parse_hub(body)
+                    if count_start == 1:
+                        raise ValueError(
+                            "This is the second declaration of a "
+                            + "start_hub in your configuration file")
+                    hub = parse_hub(body, START_END_KEYS)
+                    coordinate: list[int, int] = [hub.pos_x, hub.pos_y]
+                    # print(f"COORDINATES {coordinates}")
+                    # print(coordinate)
+                    if coordinate in coordinates:
+                        raise ValueError(
+                            "Two zones can't have the same coordinates")
+                    # print("CA CONTINUE ICI")
+                    hubs.append(hub)
+                    coordinates.append(coordinate)
                     start = hub
                     hubs.append(hub)
-                    line_number += 1
+                    count_start += 1
+                    # print("CA CONTINUE AUSSI ICI")
                 case "end_hub":
-                    hub = parse_hub(body)
+                    if count_end == 1:
+                        raise ValueError(
+                            "This is the second declaration of a "
+                            + "end_hub in your configuration file")
+                    hub = parse_hub(body, START_END_KEYS)
+                    coordinate: list[int, int] = [hub.pos_x, hub.pos_y]
+                    print(f"COORDINATES {coordinates}")
+                    if coordinate in coordinates:
+                        raise ValueError(
+                            "Two zones can't have the same coordinates")
+                    hubs.append(hub)
+                    coordinates.append(coordinate)
                     end = hub
                     hubs.append(hub)
-                    line_number += 1
+                    count_end += 1
                 case "hub":
-                    hub = parse_hub(body)
+                    hub_names = [hub.name for hub in hubs]
+                    # print(f"i am {body.split()[0]}")
+                    parts: list[str] = body.split()
+                    if parts[0] in hub_names:
+                        raise ValueError("hub name already exists")
+                    hub = parse_hub(body, HUB_KEYS)
+                    coordinate: list[int, int] = [hub.pos_x, hub.pos_y]
+                    # print(f"COORDINATES {coordinates}")
+                    if coordinate in coordinates:
+                        print(coordinates.index(coordinate))
+                        raise ValueError(
+                            "Two zones can't have the same coordinates")
                     hubs.append(hub)
-                    line_number += 1
+                    coordinates.append(coordinate)
                 case "connection":
-                    connection = parse_connection(body, hubs)
-                    connections.append(connection)
-                    line_number += 1
+                    continue
                 case _:
                     raise ValueError(f"Invalid field : {field}")
         except ValueError as e:
             print(f"line {line_number} : {e}")
+            return None
+
+    for line_number, line in enumerate(lines, start=1):
+        if line.startswith("#") or line.strip() == "":
+            continue
+        field, sep, body = line.partition(":")
+        if not sep or not body or not field:
+            raise ValueError(f"line {line_number}: Invalid line(field,"
+                                     + " separator or data missing)")
+        try:
+            match field:
+                case "nb_drones":
+                    continue
+                case "start_hub":
+                    continue
+                case "end_hub":
+                    continue
+                case "hub":
+                    continue
+                case "connection":
+                    connection = parse_connection(body, hubs)
+                    connections.append(connection)
+                case _:
+                    raise ValueError(f"Invalid field : {field}")
+        except ValueError as e:
+            print(f"line {line_number} : {e}")
+            return None
+
     if nb_drones == 0:
         raise ValueError("nb_drones missing or equal 0")
     elif start is None:
@@ -74,13 +151,16 @@ def parse_metadata(metadata: str) -> dict[str, str]:
     return metadata_dict
 
 
-def parse_hub(line: str) -> Hub:
+def parse_hub(line: str, allowed_keys: set[str]) -> Hub:
     """receives the values of a hub and transforms it into a Hub object"""
     head, sep, rest = line.partition("[")
     values = head.split()
     if len(values) != 3:
         raise ValueError("a hub needs a name and two coordinates")
     metadata = parse_metadata(sep + rest) if sep else {}
+    for key in metadata:
+        if key not in allowed_keys:
+            raise ValueError(f"{key} not allowed in this field")
     return Hub(
             name=values[0],
             pos_x=int(values[1]),
@@ -116,6 +196,8 @@ def parse_connection(line: str, hubs: list[Hub]) -> Connection:
 def main() -> int:
     try:
         map: Map = get_map()
+        if map is None:
+            return 1
         print(f"nb_drones : {map.nb_drones}")
         start = map.start
         print("start : ", end="")
