@@ -92,12 +92,18 @@ def get_map() -> Map:
                     coordinates.append(coordinate)
                 case "connection":
                     connection = parse_connection(body, hubs)
+                    if connection.first_hub == connection.second_hub:
+                        raise ValueError(
+                            "A connection needs two different hubs")
                     for check in connections:
                         if (check.first_hub == connection.second_hub
                            and check.second_hub == connection.first_hub):
                             raise ValueError(
-                                "double connection, same hubs can only be "
+                                "Double connection, same hubs can only be "
                                 + "connected once")
+                        if (check.first_hub == connection.first_hub
+                           and check.second_hub == connection.second_hub):
+                            raise ValueError("This connection already exists")
                     connections.append(connection)
                 case _:
                     raise ValueError(f"Invalid field : {field}")
