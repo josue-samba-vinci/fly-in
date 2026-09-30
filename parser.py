@@ -1,7 +1,6 @@
 from config import Hub, Connection, Map, ZoneType
 
 
-START_END_KEYS = {}
 HUB_KEYS = {"zone", "color", "max_drones"}
 
 
@@ -20,7 +19,6 @@ def get_map() -> Map:
     with open("input.txt", "r") as f:
         content = f.read()
     lines = content.splitlines()
-
     for line_number, line in enumerate(lines, start=1):
         if line.startswith("#") or line.strip() == "":
             continue
@@ -36,36 +34,46 @@ def get_map() -> Map:
         try:
             match field:
                 case "nb_drones":
+                    if line_number != 1:
+                        raise ValueError(
+                            "nb_drones needs to be on the first line of the "
+                            + "config file")
                     if int(body) <= 0:
                         raise ValueError(
                             "nb_drones needs to be greater than 0")
                     nb_drones = int(body)
                 case "start_hub":
+                    hub_names = [hub.name for hub in hubs]
+                    parts: list[str] = body.split()
+                    if parts[0] in hub_names:
+                        raise ValueError("hub name already exists")
                     if count_start == 1:
                         raise ValueError(
                             "This is the second declaration of a "
                             + "start_hub in your configuration file")
-                    hub = parse_hub(body, START_END_KEYS)
+                    hub = parse_hub(body, ignore_capacity=True)
                     coordinate: list[int, int] = [hub.pos_x, hub.pos_y]
                     if coordinate in coordinates:
                         raise ValueError(
                             "Two zones can't have the same coordinates")
-                    hubs.append(hub)
                     coordinates.append(coordinate)
                     start = hub
                     hubs.append(hub)
                     count_start += 1
                 case "end_hub":
+                    hub_names = [hub.name for hub in hubs]
+                    parts: list[str] = body.split()
+                    if parts[0] in hub_names:
+                        raise ValueError("hub name already exists")
                     if count_end == 1:
                         raise ValueError(
                             "This is the second declaration of a "
                             + "end_hub in your configuration file")
-                    hub = parse_hub(body, START_END_KEYS)
+                    hub = parse_hub(body, ignore_capacity=True)
                     coordinate = [hub.pos_x, hub.pos_y]
                     if coordinate in coordinates:
                         raise ValueError(
                             "Two zones can't have the same coordinates")
-                    hubs.append(hub)
                     coordinates.append(coordinate)
                     end = hub
                     hubs.append(hub)
@@ -75,7 +83,7 @@ def get_map() -> Map:
                     parts: list[str] = body.split()
                     if parts[0] in hub_names:
                         raise ValueError("hub name already exists")
-                    hub = parse_hub(body, HUB_KEYS)
+                    hub = parse_hub(body)
                     coordinate = [hub.pos_x, hub.pos_y]
                     if coordinate in coordinates:
                         raise ValueError(
@@ -84,6 +92,12 @@ def get_map() -> Map:
                     coordinates.append(coordinate)
                 case "connection":
                     connection = parse_connection(body, hubs)
+                    for check in connections:
+                        if (check.first_hub == connection.second_hub
+                           and check.second_hub == connection.first_hub):
+                            raise ValueError(
+                                "double connection, same hubs can only be "
+                                + "connected once")
                     connections.append(connection)
                 case _:
                     raise ValueError(f"Invalid field : {field}")
@@ -101,6 +115,8 @@ def get_map() -> Map:
         raise ValueError("no hubs")
     elif len(connections) == 0:
         raise ValueError("no connections")
+    start.max_drones = nb_drones
+    end.max_drones = nb_drones
     return Map(nb_drones, start, end, hubs, connections)
 
 
@@ -118,7 +134,7 @@ def parse_metadata(metadata: str) -> dict[str, str]:
     return metadata_dict
 
 
-def parse_hub(line: str, allowed_keys: set[str]) -> Hub:
+def parse_hub(line: str, ignore_capacity: bool = False) -> Hub:
     """receives the values of a hub and transforms it into a Hub object"""
     head, sep, rest = line.partition("[")
     values = head.split()
@@ -126,11 +142,13 @@ def parse_hub(line: str, allowed_keys: set[str]) -> Hub:
         raise ValueError("a hub needs a name and two coordinates")
     metadata = parse_metadata(sep + rest) if sep else {}
     for key in metadata:
-        if key not in allowed_keys:
+        if key not in HUB_KEYS:
             raise ValueError(f"{key} not allowed in this field")
-    if int(metadata.get("max_drones", 1)) < 0:
-        raise ValueError(
-            "max_drones field value must be a positive integer")
+    if not ignore_capacity:
+        # in case of classic hub
+        if int(metadata.get("max_drones", 1)) <= 0:
+            raise ValueError(
+                "max_drones field value must be a positive integer")
     return Hub(
             name=values[0],
             pos_x=int(values[1]),
@@ -153,7 +171,7 @@ def parse_connection(line: str, hubs: list[Hub]) -> Connection:
         if hub not in hub_names:
             raise ValueError(f"{hub} is not an existing hub")
     metadata = parse_metadata(sep + rest) if sep else {}
-    if int(metadata.get("max_link_capacity", 1)) < 0:
+    if int(metadata.get("max_link_capacity", 1)) <= 0:
         raise ValueError(
             "max_link_capacity field value must be a positive integer")
     return Connection(
@@ -175,6 +193,7 @@ def main() -> int:
         print(f"{start.name}, ", end="")
         print(f"{start.pos_x}, ", end="")
         print(f"{start.pos_y}, ", end="")
+        print(f"{start.max_drones}, ", end="")
         print(start.zone)
         end = map.end
         print("end : ", end="")
@@ -182,6 +201,7 @@ def main() -> int:
         print(f"{end.name}, ", end="")
         print(f"{end.pos_x}, ", end="")
         print(f"{end.pos_y}, ", end="")
+        print(f"{end.max_drones}, ", end="")
         print(end.zone)
         nb = 1
         for hub in map.hubs:
