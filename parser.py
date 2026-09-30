@@ -1,7 +1,7 @@
 from config import Hub, Connection, Map, ZoneType
 
 
-START_END_KEYS = {"color"}
+START_END_KEYS = {}
 HUB_KEYS = {"zone", "color", "max_drones"}
 
 
@@ -47,26 +47,21 @@ def get_map() -> Map:
                             + "start_hub in your configuration file")
                     hub = parse_hub(body, START_END_KEYS)
                     coordinate: list[int, int] = [hub.pos_x, hub.pos_y]
-                    # print(f"COORDINATES {coordinates}")
-                    # print(coordinate)
                     if coordinate in coordinates:
                         raise ValueError(
                             "Two zones can't have the same coordinates")
-                    # print("CA CONTINUE ICI")
                     hubs.append(hub)
                     coordinates.append(coordinate)
                     start = hub
                     hubs.append(hub)
                     count_start += 1
-                    # print("CA CONTINUE AUSSI ICI")
                 case "end_hub":
                     if count_end == 1:
                         raise ValueError(
                             "This is the second declaration of a "
                             + "end_hub in your configuration file")
                     hub = parse_hub(body, START_END_KEYS)
-                    coordinate: list[int, int] = [hub.pos_x, hub.pos_y]
-                    # print(f"COORDINATES {coordinates}")
+                    coordinate = [hub.pos_x, hub.pos_y]
                     if coordinate in coordinates:
                         raise ValueError(
                             "Two zones can't have the same coordinates")
@@ -77,15 +72,12 @@ def get_map() -> Map:
                     count_end += 1
                 case "hub":
                     hub_names = [hub.name for hub in hubs]
-                    # print(f"i am {body.split()[0]}")
                     parts: list[str] = body.split()
                     if parts[0] in hub_names:
                         raise ValueError("hub name already exists")
                     hub = parse_hub(body, HUB_KEYS)
-                    # coordinate: list[int, int] = [hub.pos_x, hub.pos_y]
-                    # print(f"COORDINATES {coordinates}")
+                    coordinate = [hub.pos_x, hub.pos_y]
                     if coordinate in coordinates:
-                        # print(coordinates.index(coordinate))
                         raise ValueError(
                             "Two zones can't have the same coordinates")
                     hubs.append(hub)
@@ -136,6 +128,9 @@ def parse_hub(line: str, allowed_keys: set[str]) -> Hub:
     for key in metadata:
         if key not in allowed_keys:
             raise ValueError(f"{key} not allowed in this field")
+    if int(metadata.get("max_drones", 1)) < 0:
+        raise ValueError(
+            "max_drones field value must be a positive integer")
     return Hub(
             name=values[0],
             pos_x=int(values[1]),
@@ -154,13 +149,13 @@ def parse_connection(line: str, hubs: list[Hub]) -> Connection:
     if len(values) != 2:
         raise ValueError("A connection requires two hubs")
     hub_names = [hub.name for hub in hubs]
-    # print(hub_names)
     for hub in values:
-        # print("I'm", end="")
-        # print(hub)
         if hub not in hub_names:
             raise ValueError(f"{hub} is not an existing hub")
     metadata = parse_metadata(sep + rest) if sep else {}
+    if int(metadata.get("max_link_capacity", 1)) < 0:
+        raise ValueError(
+            "max_link_capacity field value must be a positive integer")
     return Connection(
                     first_hub=values[0],
                     second_hub=values[1],
@@ -195,6 +190,7 @@ def main() -> int:
             print(f"{hub.pos_x}, ", end="")
             print(f"{hub.pos_y}, ", end="")
             print(f"{hub.color}, ", end="")
+            print(f"{hub.max_drones}, ", end="")
             print(hub.zone)
             nb += 1
         nb = 1
