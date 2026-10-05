@@ -19,6 +19,7 @@ class Hub():
                  zone: ZoneType = ZoneType.NORMAL,
                  color: str | None = None,
                  max_drones: int = 1,
+                 actual_nb_drones: int = 0
                  ) -> None:
 
         self.name = name
@@ -27,6 +28,7 @@ class Hub():
         self.zone = zone
         self.color = color
         self.max_drones = max_drones
+        self.actual_nb_drones = actual_nb_drones
 
 
 class Connection():
@@ -40,16 +42,54 @@ class Connection():
         self.max_link_capacity = max_link_capacity
 
 
+class Drone():
+    def __init__(self,
+                 actual_hub: Hub,
+                 turn_to_wait: int) -> None:
+
+        self.actual_hub = actual_hub
+        self.turn_to_wait = turn_to_wait
+
+
 class Map():
     def __init__(self,
-                 nb_drones: int | None = None,
+                 nb_drones: int = 0,
                  start: Hub | None = None,
                  end: Hub | None = None,
-                 hubs: list[Hub] | None = None,
-                 connections: list[Connection] | None = None) -> None:
+                 hubs: list[Hub] = [],
+                 connections: list[Connection] = [],
+                 turn_count: int = 0) -> None:
 
         self.nb_drones = nb_drones
         self.start = start
         self.end = end
         self.hubs = hubs
         self.connections = connections
+        self.turn_count = turn_count
+
+
+class Graph():
+    def __init__(self, map: Map) -> None:
+        self.map = map
+        self.hubs: dict[str, Hub] = {
+            hub.name: hub for hub in map.hubs
+            }
+        self.neighbours: dict[str, list[tuple[str, Connection]]] = {
+            name: [] for name in self.hubs
+            }
+        for connection in map.connections:
+            self.neighbours[connection.first_hub].append(
+                (connection.second_hub, connection))
+            self.neighbours[connection.second_hub].append(
+                (connection.first_hub, connection))
+
+    def dfs(self, name: str, visited: set[str] | None = None) -> set[str]:
+        """returns every hub reachable from name"""
+        if visited is None:
+            visited = set()
+        visited.add(name)
+        # print(name, end=" ")
+        for neighbour, _ in self.neighbours[name]:
+            if neighbour not in visited and self.hubs[neighbour].zone is not ZoneType.BLOCKED:
+                self.dfs(neighbour, visited)
+        return visited
