@@ -1,4 +1,5 @@
 from enum import Enum
+from heapq import heapify, heappop, heappush
 
 
 class ZoneType(Enum):
@@ -74,22 +75,68 @@ class Graph():
         self.hubs: dict[str, Hub] = {
             hub.name: hub for hub in map.hubs
             }
-        self.neighbours: dict[str, list[tuple[str, Connection]]] = {
+        # print(self.hubs)
+        self.graph: dict[str, list[tuple[str, int]]] = {
             name: [] for name in self.hubs
             }
         for connection in map.connections:
-            self.neighbours[connection.first_hub].append(
-                (connection.second_hub, connection))
-            self.neighbours[connection.second_hub].append(
-                (connection.first_hub, connection))
+            # print(connection.first_hub)
+            # print(connection.second_hub)
+            self.graph[connection.first_hub].append(
+                (connection.second_hub, self.hubs[connection.second_hub].zone.cost()))
+            self.graph[connection.second_hub].append(
+                (connection.first_hub, self.hubs[connection.first_hub].zone.cost()))
+        print(self.graph)
 
-    def dfs(self, name: str, visited: set[str] | None = None) -> set[str]:
+    def set_distances(self, source: str) -> dict[str, int]:
+        distances = {node: float("inf") for node in self.graph}
+        distances[source] = 0
+        return distances
+        # print(distances)
+
+    def shortest_path(self, source: str):
+        distances: dict[str, float] = self.set_distances(source)
+        pq = [(0, source)]
+        heapify(pq)
+        visited = set()
+        while pq:
+            print(f"pq : {pq}")
+            current_distance, current_node = heappop(pq)
+            print(f"current_distance : {current_distance}")
+            print(f"current_node : {current_node}")
+            print(f"visited : {visited}")
+            if current_node in visited:
+                continue
+            visited.add(current_node)
+            for neighbor, distance in self.graph[current_node]:
+                print(f"CHECK DES DISTANCES DE {neighbor}")
+                non_final_distance = current_distance + distance
+                print(f"non_final_distance : {non_final_distance}")
+                print(f"distances[{neighbor}] : {distances[neighbor]}")
+                if non_final_distance < distances[neighbor]:
+                    print(f"MISE A JOUR DE LA DISTANCE DANS DISTANCES[{neighbor}]")
+                    distances[neighbor] = non_final_distance
+                    heappush(pq, (non_final_distance, neighbor))
+        return distances
+
+    def dfs(self, name: str, visited: list[str] | None = None) -> list[str]:
         """returns every hub reachable from name"""
+        # breakpoint()
         if visited is None:
-            visited = set()
-        visited.add(name)
+            visited = []
+        visited.append(name)
+        # print(f"visited = {visited}")
         # print(name, end=" ")
-        for neighbour, _ in self.neighbours[name]:
-            if neighbour not in visited and self.hubs[neighbour].zone is not ZoneType.BLOCKED:
+        for neighbour, _ in self.graph[name]:
+            # print(f"neighbour = {neighbour}")
+            if (neighbour not in visited and
+               self.hubs[neighbour].zone is not ZoneType.BLOCKED):
                 self.dfs(neighbour, visited)
+        # print(f"{neighbour}")
+        # print(visited)
         return visited
+
+    def dijkstra(self, name: str, path: list[str] | None = None) -> list[str]:
+        if path is None:
+            path = []
+        path.append(name)

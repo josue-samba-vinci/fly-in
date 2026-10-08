@@ -208,6 +208,11 @@ def main() -> int:
         if map is None:
             return 1
         graph = Graph(map)
+        distances = graph.shortest_path("start")
+        print(distances)
+        to_goal = distances["goal"]
+        print(distances)
+        print(f"shortest distance from start to goal is {to_goal}")
         if map.end.name not in graph.dfs(map.start.name):
             raise ValueError("Unsolvable map : end not reachable from start")
         print("MAP AT THE BEGINNING OF THE SIMUATION")
