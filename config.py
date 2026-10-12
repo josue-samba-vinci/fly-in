@@ -111,7 +111,7 @@ class Graph():
             for neighbor, distance in self.graph[current_node]:
                 print(f"CHECK DES DISTANCES DE {neighbor}")
                 non_final_distance = current_distance + distance
-                print(f"non_final_distance : {non_final_distance}")
+                print(f"non_final_distance : {current_distance} + {distance} = {non_final_distance}")
                 print(f"distances[{neighbor}] : {distances[neighbor]}")
                 if non_final_distance < distances[neighbor]:
                     print(f"MISE A JOUR DE LA DISTANCE DANS DISTANCES[{neighbor}]")
