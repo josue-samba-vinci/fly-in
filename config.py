@@ -58,7 +58,6 @@ class Drone():
     #     while (actual_hub != )
 
 
-
 class Map():
     def __init__(self,
                  nb_drones: int = 0,
@@ -82,24 +81,22 @@ class Graph():
         self.hubs: dict[str, Hub] = {
             hub.name: hub for hub in map.hubs
             }
-        # print(self.hubs)
         self.graph: dict[str, list[tuple[str, int]]] = {
             name: [] for name in self.hubs
             }
         for connection in map.connections:
-            # print(connection.first_hub)
-            # print(connection.second_hub)
             self.graph[connection.first_hub].append(
-                (connection.second_hub, self.hubs[connection.second_hub].zone.cost()))
+                (connection.second_hub,
+                 self.hubs[connection.second_hub].zone.cost()))
             self.graph[connection.second_hub].append(
-                (connection.first_hub, self.hubs[connection.first_hub].zone.cost()))
+                (connection.first_hub,
+                 self.hubs[connection.first_hub].zone.cost()))
         print(self.graph)
 
     def set_distances(self, source: str) -> dict[str, int]:
         distances = {node: float("inf") for node in self.graph}
         distances[source] = 0
         return distances
-        # print(distances)
 
     def shortest_path(self, source: str, end: str) -> list[str]:
         distances: dict[str, float] = self.set_distances(source)
@@ -117,12 +114,9 @@ class Graph():
                 continue
             visited.add(current_node)
             for neighbor, distance in self.graph[current_node]:
-                print(f"CHECK DES DISTANCES DE {neighbor}")
                 non_final_distance = current_distance + distance
-                print(f"non_final_distance : {current_distance} + {distance} = {non_final_distance}")
-                print(f"distances[{neighbor}] : {distances[neighbor]}")
-                if non_final_distance < distances[neighbor] and self.hubs[neighbor].zone is not ZoneType.BLOCKED:
-                    print(f"MISE A JOUR DE LA DISTANCE DANS DISTANCES[{neighbor}]")
+                if (non_final_distance < distances[neighbor]
+                   and self.hubs[neighbor].zone is not ZoneType.BLOCKED):
                     distances[neighbor] = non_final_distance
                     best_previous[neighbor] = current_node
                     heappush(pq, (non_final_distance, neighbor))
@@ -134,22 +128,15 @@ class Graph():
         while (temp_key != source):
             temp_key = best_previous[temp_key]
             path.append(temp_key)
-        # print("THIS IS THE PATH :")
         return path[::-1]
 
     def dfs(self, name: str, visited: list[str] | None = None) -> list[str]:
         """returns every hub reachable from name"""
-        # breakpoint()
         if visited is None:
             visited = []
         visited.append(name)
-        # print(f"visited = {visited}")
-        # print(name, end=" ")
         for neighbour, _ in self.graph[name]:
-            # print(f"neighbour = {neighbour}")
             if (neighbour not in visited and
                self.hubs[neighbour].zone is not ZoneType.BLOCKED):
                 self.dfs(neighbour, visited)
-        # print(f"{neighbour}")
-        # print(visited)
         return visited
