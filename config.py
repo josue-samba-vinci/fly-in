@@ -46,10 +46,17 @@ class Connection():
 class Drone():
     def __init__(self,
                  actual_hub: Hub,
-                 turn_to_wait: int) -> None:
+                 id: int,
+                 path: list[str]
+                 ) -> None:
 
         self.actual_hub = actual_hub
-        self.turn_to_wait = turn_to_wait
+        self.id = id
+        self.path = path
+
+    # def path(self, id_drone: int) -> tuple[int, str]:
+    #     while (actual_hub != )
+
 
 
 class Map():
@@ -94,10 +101,11 @@ class Graph():
         return distances
         # print(distances)
 
-    def shortest_path(self, source: str):
+    def shortest_path(self, source: str, end: str) -> list[str]:
         distances: dict[str, float] = self.set_distances(source)
         pq = [(0, source)]
         heapify(pq)
+        best_previous: dict[str, str] = {}
         visited = set()
         while pq:
             print(f"pq : {pq}")
@@ -113,11 +121,21 @@ class Graph():
                 non_final_distance = current_distance + distance
                 print(f"non_final_distance : {current_distance} + {distance} = {non_final_distance}")
                 print(f"distances[{neighbor}] : {distances[neighbor]}")
-                if non_final_distance < distances[neighbor]:
+                if non_final_distance < distances[neighbor] and self.hubs[neighbor].zone is not ZoneType.BLOCKED:
                     print(f"MISE A JOUR DE LA DISTANCE DANS DISTANCES[{neighbor}]")
                     distances[neighbor] = non_final_distance
+                    best_previous[neighbor] = current_node
                     heappush(pq, (non_final_distance, neighbor))
-        return distances
+        print(f"best_previous = {best_previous}")
+        path: list[str] = []
+        path.append(end)
+        temp_key = end
+        print(f"{temp_key} != {source}")
+        while (temp_key != source):
+            temp_key = best_previous[temp_key]
+            path.append(temp_key)
+        # print("THIS IS THE PATH :")
+        return path[::-1]
 
     def dfs(self, name: str, visited: list[str] | None = None) -> list[str]:
         """returns every hub reachable from name"""
@@ -135,8 +153,3 @@ class Graph():
         # print(f"{neighbour}")
         # print(visited)
         return visited
-
-    def dijkstra(self, name: str, path: list[str] | None = None) -> list[str]:
-        if path is None:
-            path = []
-        path.append(name)
