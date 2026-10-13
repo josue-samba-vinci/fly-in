@@ -1,4 +1,4 @@
-from config import Hub, Connection, Map, ZoneType, Graph
+from config import Hub, Connection, Map, ZoneType, Graph, Drone
 import sys
 from debug_view import DebugView  # TEMP: remove with debug_view.py
 
@@ -198,9 +198,6 @@ def parse_connection(line: str, hubs: list[Hub]) -> Connection:
                     max_link_capacity=int(metadata.get("max_link_capacity", 1))
                      )
 
-# def create_drone(nb_drones: int) -> None:
-#     for i in nb_drones:
-
 
 def main() -> int:
     try:
@@ -208,9 +205,11 @@ def main() -> int:
         if map is None:
             return 1
         graph = Graph(map)
-        # print(distances)
-        # to_goal = distances["goal"]
-        # print(f"shortest distance from start to goal is {to_goal}")
+        graph.drones = map.create_drones()
+        # for drone in graph.drones:
+            # print(drone.actual_hub.name)
+            # print(drone.id)
+            # print(drone.path)
         if map.end.name not in graph.dfs(map.start.name):
             raise ValueError("Unsolvable map : end not reachable from start")
         path = graph.shortest_path(map.start.name, map.end.name)

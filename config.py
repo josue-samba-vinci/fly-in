@@ -74,6 +74,12 @@ class Map():
         self.connections = connections
         self.turn_count = turn_count
 
+    def create_drones(self) -> list[Drone]:
+        drones: list[Drone] = []
+        for i in range(1, self.nb_drones + 1):
+            drones.append(Drone(self.start, i, []))
+        return drones
+
 
 class Graph():
     def __init__(self, map: Map) -> None:
@@ -84,6 +90,7 @@ class Graph():
         self.graph: dict[str, list[tuple[str, int]]] = {
             name: [] for name in self.hubs
             }
+        self.drones: list[Drone] = []
         for connection in map.connections:
             self.graph[connection.first_hub].append(
                 (connection.second_hub,
