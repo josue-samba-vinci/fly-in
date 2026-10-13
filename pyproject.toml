@@ -7,7 +7,9 @@ authors = [
     { email = "josuesamba99@gmail.com" }
 ]
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "pygame>=2.6.1",
+]
 
 [tool.uv]
 package = false

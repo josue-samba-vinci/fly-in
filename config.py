@@ -60,9 +60,9 @@ class Drone():
 
 class Map():
     def __init__(self,
-                 nb_drones: int = 0,
-                 start: Hub | None = None,
-                 end: Hub | None = None,
+                 nb_drones: int,
+                 start: Hub,
+                 end: Hub,
                  hubs: list[Hub] = [],
                  connections: list[Connection] = [],
                  turn_count: int = 0) -> None:
@@ -91,14 +91,14 @@ class Graph():
             self.graph[connection.second_hub].append(
                 (connection.first_hub,
                  self.hubs[connection.first_hub].zone.cost()))
-        print(self.graph)
 
-    def set_distances(self, source: str) -> dict[str, int]:
+    def set_distances(self, source: str) -> dict[str, float]:
         distances = {node: float("inf") for node in self.graph}
         distances[source] = 0
         return distances
 
     def shortest_path(self, source: str, end: str) -> list[str]:
+        """returns the shortest path from source to end"""
         distances: dict[str, float] = self.set_distances(source)
         pq = [(0, source)]
         heapify(pq)
@@ -107,9 +107,6 @@ class Graph():
         while pq:
             print(f"pq : {pq}")
             current_distance, current_node = heappop(pq)
-            print(f"current_distance : {current_distance}")
-            print(f"current_node : {current_node}")
-            print(f"visited : {visited}")
             if current_node in visited:
                 continue
             visited.add(current_node)
@@ -120,11 +117,9 @@ class Graph():
                     distances[neighbor] = non_final_distance
                     best_previous[neighbor] = current_node
                     heappush(pq, (non_final_distance, neighbor))
-        print(f"best_previous = {best_previous}")
         path: list[str] = []
         path.append(end)
         temp_key = end
-        print(f"{temp_key} != {source}")
         while (temp_key != source):
             temp_key = best_previous[temp_key]
             path.append(temp_key)

@@ -7,16 +7,16 @@ HUB_KEYS = {"zone", "color", "max_drones"}
 CONNECTION_KEY = {"max_link_capacity"}
 
 
-def get_map() -> Map:
+def get_map() -> Map | None:
     """parse a map file into a Map object"""
     line_number: int = 0
     content: str = ""
     nb_drones: int = 0
-    start: Hub = None
-    end: Hub = None
+    start: Hub | None = None
+    end: Hub | None = None
     hubs: list[Hub] = []
     connections: list[Connection] = []
-    coordinates: list[int, int] = []
+    coordinates: set[tuple[int, int]] = set()
     count_start: int = 0
     count_end: int = 0
     count_case: int = 0
@@ -54,11 +54,11 @@ def get_map() -> Map:
                             "This is the second declaration of a "
                             + "start_hub in your configuration file")
                     hub = parse_hub(body, ignore_capacity=True)
-                    coordinate: list[int, int] = [hub.pos_x, hub.pos_y]
+                    coordinate: tuple[int, int] = (hub.pos_x, hub.pos_y)
                     if coordinate in coordinates:
                         raise ValueError(
                             "Two zones can't have the same coordinates")
-                    coordinates.append(coordinate)
+                    coordinates.add(coordinate)
                     start = hub
                     hubs.append(hub)
                     count_case += 1
@@ -73,11 +73,11 @@ def get_map() -> Map:
                             "This is the second declaration of a "
                             + "end_hub in your configuration file")
                     hub = parse_hub(body, ignore_capacity=True)
-                    coordinate = [hub.pos_x, hub.pos_y]
+                    coordinate = (hub.pos_x, hub.pos_y)
                     if coordinate in coordinates:
                         raise ValueError(
                             "Two zones can't have the same coordinates")
-                    coordinates.append(coordinate)
+                    coordinates.add(coordinate)
                     end = hub
                     hubs.append(hub)
                     count_case += 1
@@ -88,12 +88,12 @@ def get_map() -> Map:
                     if parts[0] in hub_names:
                         raise ValueError("hub name already exists")
                     hub = parse_hub(body)
-                    coordinate = [hub.pos_x, hub.pos_y]
+                    coordinate = (hub.pos_x, hub.pos_y)
                     if coordinate in coordinates:
                         raise ValueError(
                             "Two zones can't have the same coordinates")
                     hubs.append(hub)
-                    coordinates.append(coordinate)
+                    coordinates.add(coordinate)
                     count_case += 1
                 case "connection":
                     connection = parse_connection(body, hubs)
@@ -204,17 +204,17 @@ def parse_connection(line: str, hubs: list[Hub]) -> Connection:
 
 def main() -> int:
     try:
-        map: Map = get_map()
+        map: Map | None = get_map()
         if map is None:
             return 1
         graph = Graph(map)
-        distances = graph.shortest_path("start")
-        print(distances)
-        to_goal = distances["goal"]
-        print(distances)
-        print(f"shortest distance from start to goal is {to_goal}")
+        # print(distances)
+        # to_goal = distances["goal"]
+        # print(f"shortest distance from start to goal is {to_goal}")
         if map.end.name not in graph.dfs(map.start.name):
             raise ValueError("Unsolvable map : end not reachable from start")
+        path = graph.shortest_path(map.start.name, map.end.name)
+        print(path)
         print("MAP AT THE BEGINNING OF THE SIMUATION")
         print(f"nb_drones : {map.nb_drones}")
         nb = 1
