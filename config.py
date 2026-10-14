@@ -154,28 +154,44 @@ class Graph():
                 self.dfs(neighbour, visited)
         return visited
 
-    # def get_hub(self, hub_name: str) -> Hub:
-    #     if hub_name not in self.hubs:
-    #         raise ValueError(f"{hub_name} hub doesn't exist")
-    #     return self.hubs[hub_name]
-
-    # def get_connection(self, connection_name: str) -> Connection:
-    #     if connection_name not in self.map.connections:
-    #         raise ValueError(f"{connection_name} connection doesn't exist")
-    def space_left_in_hub(self, hub_name: str) -> bool:
+    def space_left_in_hub(self, hub_name: str, turn: int) -> bool:
+        """Checks if there is place left inside a hub
+            returns False if not True if there is still place
+            in the hub
+        """
         if hub_name not in self.hubs:
             raise ValueError(f"{hub_name} hub doesn't exist")
         if (hub_name == self.map.start.name
            or hub_name == self.map.end.name):
             return True
-        if self.hubs[hub_name].actual_nb_drones >= self.hubs[hub_name].max_drones:
+        if (self.hubs[hub_name].actual_nb_drones >=
+           self.hubs[hub_name].max_drones):
             return False
         return True
 
-    def space_left_on_connection(self, connection_name: str) -> bool:
-        if connection_name not in self.connections:
-            raise ValueError(f"{connection_name} connection doesn't exist")
-        if (self.connections[connection_name].actual_nb_drones >=
-           self.connections[connection_name].max_link_capacity):
+    def space_left_on_connection(
+            self, hub: str, next_hub: str, turn: int) -> bool:
+        """Checks if there is place left inside a connection
+            returns False if not True if there is still place
+            on the connection
+        """
+        connection: str = f"{hub}-{next_hub}"
+        if connection not in self.connections:
+            raise ValueError(f"{hub}-{next_hub} connection doesn't exist")
+        if (self.connections[f"{hub}-{next_hub}"].actual_nb_drones >=
+           self.connections[f"{hub}-{next_hub}"].max_link_capacity):
+            return False
+        return True
+
+    def next_hub(self, hub_name: str, next_hub_name: str, turn: int) -> bool:
+        """Checks if a drone can move to the a specific hub on a determined 
+        turn returns False the drone can't access, True if it can
+        """
+        cost = self.hubs[next_hub_name].zone.cost()
+        if hub_name == next_hub_name:
+            return self.space_left_in_hub(next_hub_name, turn + 1)
+        if not self.space_left_on_connection(hub_name, next_hub_name, turn):
+            return False
+        if not self.space_left_in_hub(next_hub_name, turn + cost):
             return False
         return True
