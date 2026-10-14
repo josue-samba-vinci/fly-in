@@ -151,3 +151,11 @@ class Graph():
         if hub_name not in self.hubs:
             raise ValueError(f"{hub_name} hub doesn't exist")
         return self.hubs[hub_name]
+
+    def space_left_in_hub(self, hub_name: str) -> bool:
+        if (hub_name == self.map.start.name
+           or hub_name == self.map.end.name):
+            return True
+        if self.hubs[hub_name].actual_nb_drones >= self.hubs[hub_name].max_drones:
+            return False
+        return True

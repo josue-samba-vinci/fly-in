@@ -209,8 +209,11 @@ def main() -> int:
         if map.end.name not in graph.dfs(map.start.name):
             raise ValueError("Unsolvable map : end not reachable from start")
         path = graph.shortest_path(map.start.name, map.end.name)
-        hub = graph.get_hub("start")
+        hub = graph.get_hub("goal")
         print(hub.name)
+        print(hub.max_drones)
+        print(hub.actual_nb_drones)
+        print(graph.space_left_in_hub(hub.name))
         for drone in graph.drones:
             if drone.id == 1:
                 drone.path = path
