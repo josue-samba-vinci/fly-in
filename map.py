@@ -1,4 +1,4 @@
-from config import Hub, Connection, Map, ZoneType, Graph, Drone
+from config import Hub, Connection, Map, ZoneType, Graph
 import sys
 from debug_view import DebugView  # TEMP: remove with debug_view.py
 
@@ -206,15 +206,15 @@ def main() -> int:
             return 1
         graph = Graph(map)
         graph.drones = map.create_drones()
-        # for drone in graph.drones:
-            # print(drone.actual_hub.name)
-            # print(drone.id)
-            # print(drone.path)
         if map.end.name not in graph.dfs(map.start.name):
             raise ValueError("Unsolvable map : end not reachable from start")
         path = graph.shortest_path(map.start.name, map.end.name)
-        print(path)
-        print("MAP AT THE BEGINNING OF THE SIMUATION")
+        hub = graph.get_hub("start")
+        print(hub.name)
+        for drone in graph.drones:
+            if drone.id == 1:
+                drone.path = path
+        print("MAP AT THE BEGINNING OF THE SIMULATION")
         print(f"nb_drones : {map.nb_drones}")
         nb = 1
         for hub in map.hubs:

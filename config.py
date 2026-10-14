@@ -3,6 +3,7 @@ from heapq import heapify, heappop, heappush
 
 
 class ZoneType(Enum):
+    """Enumerate class that represents every types of zones"""
     NORMAL = "normal"
     BLOCKED = "blocked"
     RESTRICTED = "restricted"
@@ -13,6 +14,7 @@ class ZoneType(Enum):
 
 
 class Hub():
+    """Class representing a hub inside a map"""
     def __init__(self,
                  name: str,
                  pos_x: int,
@@ -33,6 +35,7 @@ class Hub():
 
 
 class Connection():
+    """Class representing a connection inside a map"""
     def __init__(self,
                  first_hub: str,
                  second_hub: str,
@@ -44,6 +47,7 @@ class Connection():
 
 
 class Drone():
+    """Class representing a drone inside a map"""
     def __init__(self,
                  actual_hub: Hub,
                  id: int,
@@ -54,11 +58,9 @@ class Drone():
         self.id = id
         self.path = path
 
-    # def path(self, id_drone: int) -> tuple[int, str]:
-    #     while (actual_hub != )
-
 
 class Map():
+    """Class representing the map"""
     def __init__(self,
                  nb_drones: int,
                  start: Hub,
@@ -75,6 +77,7 @@ class Map():
         self.turn_count = turn_count
 
     def create_drones(self) -> list[Drone]:
+        """returns a list of drones contained in the map"""
         drones: list[Drone] = []
         for i in range(1, self.nb_drones + 1):
             drones.append(Drone(self.start, i, []))
@@ -82,6 +85,7 @@ class Map():
 
 
 class Graph():
+    """Class representing the graph (map + drones)"""
     def __init__(self, map: Map) -> None:
         self.map = map
         self.hubs: dict[str, Hub] = {
@@ -100,6 +104,7 @@ class Graph():
                  self.hubs[connection.first_hub].zone.cost()))
 
     def set_distances(self, source: str) -> dict[str, float]:
+        """sets distances of every node to inf and 0 for the source node"""
         distances = {node: float("inf") for node in self.graph}
         distances[source] = 0
         return distances
@@ -112,7 +117,6 @@ class Graph():
         best_previous: dict[str, str] = {}
         visited = set()
         while pq:
-            print(f"pq : {pq}")
             current_distance, current_node = heappop(pq)
             if current_node in visited:
                 continue
@@ -142,3 +146,8 @@ class Graph():
                self.hubs[neighbour].zone is not ZoneType.BLOCKED):
                 self.dfs(neighbour, visited)
         return visited
+
+    def get_hub(self, hub_name: str) -> Hub:
+        if hub_name not in self.hubs:
+            raise ValueError(f"{hub_name} hub doesn't exist")
+        return self.hubs[hub_name]
