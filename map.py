@@ -193,6 +193,7 @@ def parse_connection(line: str, hubs: list[Hub]) -> Connection:
         raise ValueError(
             "max_link_capacity field value must be a positive integer")
     return Connection(
+                    name=f"{values[0]}-{values[1]}",
                     first_hub=values[0],
                     second_hub=values[1],
                     max_link_capacity=int(metadata.get("max_link_capacity", 1))
@@ -209,11 +210,15 @@ def main() -> int:
         if map.end.name not in graph.dfs(map.start.name):
             raise ValueError("Unsolvable map : end not reachable from start")
         path = graph.shortest_path(map.start.name, map.end.name)
-        hub = graph.get_hub("goal")
-        print(hub.name)
-        print(hub.max_drones)
-        print(hub.actual_nb_drones)
-        print(graph.space_left_in_hub(hub.name))
+        connection = graph.connections["fast_junction-fast_path"]
+        print(graph.space_left_on_connection(connection.name))
+        print(connection.name)
+        print(connection.max_link_capacity)
+        print(connection.actual_nb_drones)
+        print(graph.space_left_on_connection(connection.name))
+        connection.actual_nb_drones = 2
+        print(graph.space_left_on_connection(connection.name))
+
         for drone in graph.drones:
             if drone.id == 1:
                 drone.path = path

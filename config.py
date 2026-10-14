@@ -37,13 +37,17 @@ class Hub():
 class Connection():
     """Class representing a connection inside a map"""
     def __init__(self,
+                 name: str,
                  first_hub: str,
                  second_hub: str,
-                 max_link_capacity: int = 1) -> None:
+                 max_link_capacity: int = 1,
+                 actual_nb_drones: int = 0) -> None:
 
+        self.name = name
         self.first_hub = first_hub
         self.second_hub = second_hub
         self.max_link_capacity = max_link_capacity
+        self.actual_nb_drones = actual_nb_drones
 
 
 class Drone():
@@ -91,6 +95,9 @@ class Graph():
         self.hubs: dict[str, Hub] = {
             hub.name: hub for hub in map.hubs
             }
+        self.connections: dict[str, Connection] = {
+            connection.name: connection for connection in map.connections
+        }
         self.graph: dict[str, list[tuple[str, int]]] = {
             name: [] for name in self.hubs
             }
@@ -147,15 +154,28 @@ class Graph():
                 self.dfs(neighbour, visited)
         return visited
 
-    def get_hub(self, hub_name: str) -> Hub:
+    # def get_hub(self, hub_name: str) -> Hub:
+    #     if hub_name not in self.hubs:
+    #         raise ValueError(f"{hub_name} hub doesn't exist")
+    #     return self.hubs[hub_name]
+
+    # def get_connection(self, connection_name: str) -> Connection:
+    #     if connection_name not in self.map.connections:
+    #         raise ValueError(f"{connection_name} connection doesn't exist")
+    def space_left_in_hub(self, hub_name: str) -> bool:
         if hub_name not in self.hubs:
             raise ValueError(f"{hub_name} hub doesn't exist")
-        return self.hubs[hub_name]
-
-    def space_left_in_hub(self, hub_name: str) -> bool:
         if (hub_name == self.map.start.name
            or hub_name == self.map.end.name):
             return True
         if self.hubs[hub_name].actual_nb_drones >= self.hubs[hub_name].max_drones:
+            return False
+        return True
+
+    def space_left_on_connection(self, connection_name: str) -> bool:
+        if connection_name not in self.connections:
+            raise ValueError(f"{connection_name} connection doesn't exist")
+        if (self.connections[connection_name].actual_nb_drones >=
+           self.connections[connection_name].max_link_capacity):
             return False
         return True
