@@ -195,3 +195,9 @@ class Graph():
         if not self.space_left_in_hub(next_hub_name, turn + cost):
             return False
         return True
+
+    def end_of_simulation(self) -> bool:
+        for drone in self.drones:
+            if drone.actual_hub != self.map.end:
+                return False
+            return True
