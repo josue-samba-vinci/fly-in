@@ -53,11 +53,13 @@ class Connection():
 class Drone():
     """Class representing a drone inside a map"""
     def __init__(self,
+                 name: str,
                  actual_hub: Hub,
                  id: int,
                  path: list[str]
                  ) -> None:
 
+        self.name = name
         self.actual_hub = actual_hub
         self.id = id
         self.path = path
@@ -79,13 +81,6 @@ class Map():
         self.hubs = hubs
         self.connections = connections
         self.turn_count = turn_count
-
-    def create_drones(self) -> list[Drone]:
-        """returns a list of drones contained in the map"""
-        drones: list[Drone] = []
-        for i in range(1, self.nb_drones + 1):
-            drones.append(Drone(self.start, i, []))
-        return drones
 
 
 class Graph():
@@ -154,7 +149,14 @@ class Graph():
                 self.dfs(neighbour, visited)
         return visited
 
-    def space_left_in_hub(self, hub_name: str, turn: int) -> bool:
+    def create_drones(self) -> list[Drone]:
+        """returns a list of drones contained in the map"""
+        drones: list[Drone] = []
+        for i in range(1, self.map.nb_drones + 1):
+            drones.append(Drone(f"D{i}", self.map.start, i, self.shortest_path(self.map.start.name, self.map.end.name)))
+        return drones
+
+    def space_left_in_hub(self, hub_name: str) -> bool:
         """Checks if there is place left inside a hub
             returns False if not True if there is still place
             in the hub
@@ -170,7 +172,7 @@ class Graph():
         return True
 
     def space_left_on_connection(
-            self, hub: str, next_hub: str, turn: int) -> bool:
+            self, hub: str, next_hub: str) -> bool:
         """Checks if there is place left inside a connection
             returns False if not True if there is still place
             on the connection
@@ -184,7 +186,7 @@ class Graph():
         return True
 
     def next_hub(self, hub_name: str, next_hub_name: str, turn: int) -> bool:
-        """Checks if a drone can move to the a specific hub on a determined 
+        """Checks if a drone can move to the a specific hub on a determined
         turn returns False the drone can't access, True if it can
         """
         cost = self.hubs[next_hub_name].zone.cost()
@@ -197,7 +199,28 @@ class Graph():
         return True
 
     def end_of_simulation(self) -> bool:
-        for drone in self.drones:
-            if drone.actual_hub != self.map.end:
-                return False
-            return True
+        """Checks if all drones have reached the end hub"""
+        # for drone in self.drones:
+        #     if drone.actual_hub == self.map.end:
+        #         return True
+        #     return True
+        return all(
+            drone.actual_hub == self.map.end
+            for drone in self.drones
+        )
+
+    def move_drones(self) -> None:
+        turn: int = 0
+        while not self.end_of_simulation():
+            turn += 1
+            print(f"turn {turn} : ")
+            for drone in self.drones:
+                if (drone.actual_hub != self.map.end and
+                   self.space_left_on_connection(drone.actual_hub.name, drone.path[drone.path.index(drone.actual_hub.name)+1])
+                   and self.space_left_in_hub(drone.path[drone.path.index(drone.actual_hub.name)+1])):
+                    # print(drone.actual_hub.zone.name)
+                    drone.actual_hub.actual_nb_drones -= 1
+                    drone.actual_hub = self.hubs[drone.path[drone.path.index(drone.actual_hub.name)+1]]
+                    drone.actual_hub.actual_nb_drones += 1
+                    print(drone.actual_hub.actual_nb_drones)
+                    print(f"{drone.name}-{drone.actual_hub.name}")

@@ -206,22 +206,10 @@ def main() -> int:
         if map is None:
             return 1
         graph = Graph(map)
-        graph.drones = map.create_drones()
+        graph.drones = graph.create_drones()
         if map.end.name not in graph.dfs(map.start.name):
             raise ValueError("Unsolvable map : end not reachable from start")
-        path = graph.shortest_path(map.start.name, map.end.name)
-        connection = graph.connections["fast_junction-fast_path"]
-        print(graph.space_left_on_connection(connection.name))
-        print(connection.name)
-        print(connection.max_link_capacity)
-        print(connection.actual_nb_drones)
-        print(graph.space_left_on_connection(connection.name))
-        connection.actual_nb_drones = 2
-        print(graph.space_left_on_connection(connection.name))
-
-        for drone in graph.drones:
-            if drone.id == 1:
-                drone.path = path
+        graph.move_drones()
         print("MAP AT THE BEGINNING OF THE SIMULATION")
         print(f"nb_drones : {map.nb_drones}")
         nb = 1
