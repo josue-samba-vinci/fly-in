@@ -90,9 +90,10 @@ class Graph():
         self.hubs: dict[str, Hub] = {
             hub.name: hub for hub in map.hubs
             }
-        self.connections: dict[str, Connection] = {
-            connection.name: connection for connection in map.connections
-        }
+        self.connections: dict[str, Connection] = {}
+        for connection in map.connections:
+            self.connections[f"{connection.first_hub}-{connection.second_hub}"] = connection
+            self.connections[f"{connection.second_hub}-{connection.first_hub}"] = connection
         self.graph: dict[str, list[tuple[str, int]]] = {
             name: [] for name in self.hubs
             }
@@ -222,5 +223,5 @@ class Graph():
                     drone.actual_hub.actual_nb_drones -= 1
                     drone.actual_hub = self.hubs[drone.path[drone.path.index(drone.actual_hub.name)+1]]
                     drone.actual_hub.actual_nb_drones += 1
-                    print(drone.actual_hub.actual_nb_drones)
+                    #print(drone.actual_hub.actual_nb_drones)
                     print(f"{drone.name}-{drone.actual_hub.name}")
